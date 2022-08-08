@@ -103,8 +103,6 @@ class ERDiagramGenerator implements IDiagramGenerator {
 				addRelationEdges(r, context)
 			}
 		]
-
-		LOG.info("Generated Graph: " + graph)
 	}
 
 	def RelationshipNode relationshipNodes(Relationship relationship, extension Context context) {
@@ -131,37 +129,47 @@ class ERDiagramGenerator implements IDiagramGenerator {
 	}
 
 	def void addRelationEdges(Relationship relationship, extension Context context) {
+		
 		val notation = model.notation?.notationType !== null ? model.notation.notationType : NotationType.DEFAULT;
+		
 		if (relationship.first !== null) {
 			var cardinality = getCardinality(relationship.first)
-			if (notation.equals(NotationType.CROWSFOOT) || notation.equals(NotationType.UML)) {
+			var role = ""
+			if (notation.equals(NotationType.CROWSFOOT)) {
+				cardinality = combineCardinality(relationship.first, relationship.second)	
+			}
+			else if(notation.equals(NotationType.UML)){
 				cardinality = combineCardinality(relationship.first, relationship.second)
+				role = combineRoles(relationship.first, relationship.second)
 			}
 			val source = idCache.getId(relationship.first.target)
-			val target = idCache.getId(
-				notation.equals(NotationType.CROWSFOOT) || (notation.equals(NotationType.UML) &&
-					relationship.third === null) ? relationship.second.target : relationship
+			val target = idCache.getId(notation.equals(NotationType.CROWSFOOT) || (notation.equals(NotationType.UML) &&
+									   relationship.third === null) ? relationship.second.target : relationship
 			)
-			createEdgeAndAddToGraph(relationship, source, target, 'label:first', cardinality, context)
+			createEdgeAndAddToGraph(relationship, source, target, 'label:first', cardinality, role, context)
 		}
 		if (relationship.second !== null && !notation.equals(NotationType.CROWSFOOT) &&
 			!(notation.equals(NotationType.UML) && relationship.third === null)) {
 			var cardinality = getCardinality(relationship.second)
+			var role = ""
 			if (notation.equals(NotationType.UML)) {
 				cardinality = combineCardinality(relationship.first, relationship.second)
+				role = combineRoles(relationship.first, relationship.second)
 			}
 			val source = idCache.getId(relationship)
 			val target = idCache.getId(relationship.second.target)
-			createEdgeAndAddToGraph(relationship, source, target, 'label:second', cardinality, context)
+			createEdgeAndAddToGraph(relationship, source, target, 'label:second', cardinality, role, context)
 		}
 		if (relationship.third !== null && !notation.equals(NotationType.CROWSFOOT)) {
 			var cardinality = getCardinality(relationship.third)
+			var role = ""
 			if (notation.equals(NotationType.UML)) {
 				cardinality = combineCardinality(relationship.second, relationship.third)
+				role = combineRoles(relationship.second, relationship.third)
 			}
 			val source = idCache.getId(relationship)
 			val target = idCache.getId(relationship.third.target)
-			createEdgeAndAddToGraph(relationship, source, target, 'label:third', cardinality, context)
+			createEdgeAndAddToGraph(relationship, source, target, 'label:third', cardinality, role, context)
 		}
 	}
 
@@ -172,6 +180,12 @@ class ERDiagramGenerator implements IDiagramGenerator {
 			return firstCardinality + ":" + secondCardinality
 		}
 		return "";
+	}
+	
+	def String combineRoles(RelationEntity source, RelationEntity target){
+		val roleSourceEntity = source.role === null ? "" : source.role
+		val roleTargetEntity = target.role === null ? "" : target.role
+		return roleSourceEntity+":"+roleTargetEntity
 	}
 
 	def String getCardinality(RelationEntity relationEntity) {
@@ -205,7 +219,7 @@ class ERDiagramGenerator implements IDiagramGenerator {
 	}
 
 	def void createEdgeAndAddToGraph(Relationship relationship, String source, String target, String label,
-		String cardinality, extension Context context) {
+									 String cardinality, String role, extension Context context) {
 		var labelText = '';
 		var combinedLabels = '';
 		val notationType = model.notation?.notationType
@@ -237,6 +251,7 @@ class ERDiagramGenerator implements IDiagramGenerator {
 			notation = notationType !== null ? notationType.toString : 'default'
 			relationshipCardinality = combinedLabelsFinal
 			showRelationship = relationship.third !== null
+			umlRole = role
 			isSource = label === "label:first"
 			id = idCache.uniqueId(relationship + sourceId + ':' + relationship.name + ':' + targetId)
 			children = #[new SLabel [

@@ -51,7 +51,8 @@ class NotationEdge extends SEdge {
 	String notation
 	Boolean showRelationship
 	String relationshipCardinality
-
+	String umlRole
+	
 	new() {
 	}
 

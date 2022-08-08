@@ -12,7 +12,6 @@ import {
 } from 'sprotty';
 import { InheritanceEdgeView, ERModelView, EntityNodeView, RelationshipNodeView, NotationEdgeView } from './views';
 import { EntityNode, ERModel, MultiplicityLabel, NotationEdge, RelationshipNode, InheritanceEdge } from './model';
-import { BigerEdgeLayoutPostprocessor } from './layout-postprocessor';
 
 /**
  * Sprotty Dependency Injection container
@@ -26,10 +25,6 @@ const DiagramModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(TYPES.IAnchorComputer).to(LibavoidDiamondAnchor).inSingletonScope();
     bind(TYPES.IAnchorComputer).to(LibavoidEllipseAnchor).inSingletonScope();
     bind(TYPES.IAnchorComputer).to(LibavoidRectangleAnchor).inSingletonScope();
-
-    // custom edge layout postprocessor
-    bind(BigerEdgeLayoutPostprocessor).toSelf().inSingletonScope();
-    bind(TYPES.IVNodePostprocessor).toService(BigerEdgeLayoutPostprocessor);
 
     // change animation speed to 400ms
     rebind(TYPES.CommandStackOptions).toConstantValue({
@@ -89,12 +84,8 @@ export function createDiagramContainer(widgetId: string): Container {
     router.setOptions({
         routingType: RouteType.Orthogonal,
         segmentPenalty: 50,
-        // at least height of label to avoid labels overlap if
-        // there two neighbour edges have labels on the position
-        idealNudgingDistance: 24,
-        // 25 - height of label text + label offset. Such shape buffer distance is required to
-        // avoid label over shape
-        shapeBufferDistance: 25,
+        idealNudgingDistance: 10,
+        shapeBufferDistance: 6,
         nudgeOrthogonalSegmentsConnectedToShapes: true,
         // allow or disallow moving edge end from center
         nudgeOrthogonalTouchingColinearSegments: false,

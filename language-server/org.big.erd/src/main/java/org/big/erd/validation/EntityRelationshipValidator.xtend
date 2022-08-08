@@ -15,6 +15,7 @@ import org.eclipse.emf.ecore.EStructuralFeature
 import org.big.erd.entityRelationship.Attribute
 import org.big.erd.entityRelationship.Entity
 import org.big.erd.entityRelationship.NotationType
+import org.apache.log4j.Logger
 
 /**
  * This class contains custom validation rules. 
@@ -26,6 +27,7 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 	public static String MISSING_MODEL_HEADER = "missingModelHeader";
 	public static String MISSING_ATTRIBUTE_DATATYPE = "missingAttributeDatatype";
 	public static String LOWERCASE_ENTITY_NAME = "lowercaseEntityName";
+	static val LOG = Logger.getLogger(EntityRelationshipValidator)
 	
 	@Check
 	def checkModel(Model model) {
@@ -110,13 +112,15 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 		]
     }
     
-  @Check
+  	@Check
 	def checkCardinality(Model model) {
 		
 		model.relationships.forEach [ r |
 			val firstElement = r.first
 			val secondElement = r.second
 			val thirdElement = r.third
+			
+			checkForUnallowedRoles(model.notation.notationType, r)
 			
 			if(model.notation.notationType.equals(NotationType.BACHMAN)){
 				checkBachmanCardinality(firstElement, r, EntityRelationshipPackage.Literals.RELATIONSHIP__FIRST)
@@ -151,8 +155,24 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 		]
     }
 	
+	@Check
+	def checkForUnallowedRoles(NotationType notationType, Relationship relationship) {
+		if(notationType.equals(NotationType.UML)){
+			return
+		}
+		if(relationship.first != null && relationship.first.role !== null){
+			info('''Role only allowed for UML.''', relationship, EntityRelationshipPackage.Literals.RELATIONSHIP__FIRST)
+		}
+		if(relationship.second != null && relationship.second.role !== null){
+			info('''Role only allowed for UML.''', relationship, EntityRelationshipPackage.Literals.RELATIONSHIP__SECOND)
+		}
+		if(relationship.third != null && relationship.third.role !== null){
+			info('''Role only allowed for UML.''', relationship, EntityRelationshipPackage.Literals.RELATIONSHIP__THIRD)
+		}	
+	}
+	
 	 def checkBachmanCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature) {
-		if (relationEntity !== null && (relationEntity.cardinality === null || 
+		if (relationEntity !== null && (relationEntity.cardinality === null ||
 										relationEntity.customMultiplicity !== null ||
 			 							relationEntity.minMax !== null || relationEntity.uml !== null ||
 			 							relationEntity.cardinality === CardinalityType.MANY ||
@@ -165,7 +185,8 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
     def checkChenCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature){
     	if(relationEntity !== null && (relationEntity.cardinality === null ||
     								   relationEntity.customMultiplicity !== null ||
-			 						   relationEntity.minMax !== null || relationEntity.uml !== null ||
+			 						   relationEntity.minMax !== null || 
+			 						   relationEntity.uml !== null ||
     								   relationEntity.cardinality === CardinalityType.ZERO ||
     								   relationEntity.cardinality === CardinalityType.ONE_OR_MORE || 
     								   relationEntity.cardinality === CardinalityType.ZERO_OR_MORE ||
@@ -177,7 +198,8 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
      def checkCrowsFootCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature){
     	if(relationEntity !== null && (relationEntity.cardinality === null || 
     								   relationEntity.customMultiplicity !== null || 
-    								   relationEntity.minMax !== null ||  relationEntity.uml !== null ||
+    								   relationEntity.minMax !== null ||
+    								   relationEntity.uml !== null ||
     								   relationEntity.cardinality === CardinalityType.MANY_CHEN ||
     								   relationEntity.cardinality === CardinalityType.MANY ||
     								   relationEntity.cardinality === CardinalityType.ZERO)){
@@ -186,52 +208,67 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
     }
     
     def checkMinMaxCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature) {
-		if (relationEntity !== null) {
-			if (relationEntity.minMax === null || relationEntity.minMax.length < 3) {
+		if (relationEntity === null) {
+			return
+		}
+		if (relationEntity.minMax === null) {
 				info('''Wrong cardinality.Usage: [min,max] or [min,*]''', relationship, feature)
-			}
-			if (relationEntity.minMax.toString.length === 3) {
-				var n1 = relationEntity.minMax.toString.substring(0, 1);
-				var n2 = relationEntity.minMax.toString.substring(2, 3);
-
-				if (n1.matches("\\d+") && n2.matches("\\d+") && Integer.parseInt(n1) > Integer.parseInt(n2)) {
-					info('''Wrong cardinality. Usage: [min,max] min <= max''', relationship, feature)
+			}else{
+				if(relationEntity.minMax.toString.contains(",")){
+					if(relationEntity.minMax.toString.split(",").length == 2){
+						var fistNumber = relationEntity.minMax.toString.split(",").get(0)
+						var secondNumber = relationEntity.minMax.toString.split(",").get(1)
+						if (fistNumber.matches("\\d+") && secondNumber.matches("\\d+") && Integer.parseInt(fistNumber) > Integer.parseInt(secondNumber)) {
+							info('''Wrong cardinality. Usage: [min,max] min <= max''', relationship, feature)
+						}
+					}else{
+						info('''Wrong cardinality.Usage: [min,max] or [min,*]''', relationship, feature)
+					}
+				}else{
+					info('''Wrong cardinality.Usage: [min,max] or [min,*]''', relationship, feature)
 				}
 			}
-		}
 	}
 	
 	def checkUmlCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature) {
-		if (relationEntity !== null) {
-			if(relationEntity.customMultiplicity !== null || relationEntity.minMax !== null ||
-			  (relationEntity.uml === null && relationEntity.cardinality !== CardinalityType.ZERO && 
-			  relationEntity.cardinality !== CardinalityType.ONE)){
-				info('''Wrong cardinality.Usage: [num],[min..max] or [min..*]''', relationship, feature)
+		LOG.info("1")
+		if (relationEntity === null) {
+			LOG.info("2")
+			return
+		}
+		if (relationEntity.customMultiplicity !== null || relationEntity.minMax !== null ||
+			(relationEntity.uml === null && relationEntity.cardinality !== CardinalityType.ZERO &&
+				relationEntity.cardinality !== CardinalityType.ONE)) {
+					LOG.info("3")
+			info('''Wrong cardinality.Usage: [num],[min..max] or [min..*]''', relationship, feature)
+		}
+		if (relationEntity.uml.contains("..")) {
+		LOG.info("4")
+			var cardinality = relationEntity.uml
+
+			// remove type (agg|comp)
+			if (relationEntity.uml.contains(" ")) {
+				LOG.info("5")
+				cardinality = relationEntity.uml.split(" ").get(1)
 			}
-			if(relationEntity.uml.contains("comp") && relationEntity.uml.contains("agg")){
-				info('''Invalid aggregation. Use comp or agg''', relationship, feature)
-			}
-			if (relationEntity.uml.contains("..")) {
-				var cardinality = relationEntity.uml
-				
-				if(relationEntity.uml.contains(" ")){
-					// remove type (agg|comp)
-					cardinality = relationEntity.uml.split(" ").get(1)
+			var numbers = cardinality.split("\\.\\.")
+			if (numbers.length === 2) {
+				LOG.info("6")
+				if (numbers.get(0).isEmpty || numbers.get(1).isEmpty) {
+					LOG.info("7")
+					info('''Wrong cardinality.Usage: [num],[min..max] or [min..*]''', relationship, feature)
 				}
-				var numbers = cardinality.split("\\.\\.")
-				if(numbers.length <= 1){
+				var n1 = numbers.get(0)
+				var n2 = numbers.get(1)
+				LOG.info("n1: "+n1)
+				LOG.info("n2: "+n2)
+				if (n1.matches("\\d+") && n2.matches("\\d+") && Integer.parseInt(n1) > Integer.parseInt(n2)) {
+					LOG.info("8")
 					info('''Wrong cardinality. Usage: [min..max] min <= max''', relationship, feature)
 				}
-				if(numbers.length === 2){
-					if(numbers.get(0).isEmpty || numbers.get(1).isEmpty){
-						info('''Wrong cardinality. Usage: [min..max] min <= max''', relationship, feature)
-					}
-					var n1 = numbers.get(0)
-					var n2 = numbers.get(1)
-					if (n1.matches("\\d+") && n2.matches("\\d+") && Integer.parseInt(n1) > Integer.parseInt(n2)) {
-						info('''Wrong cardinality. Usage: [min..max] min <= max''', relationship, feature)
-					}
-				}
+			} else {
+				LOG.info("9")
+				info('''Wrong cardinality.Usage: [num],[min..max] or [min..*]''', relationship, feature)
 			}
 		}
 	}

@@ -68,6 +68,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute EntityRelationship.ecore#//RelationEntity/customMultiplicity"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute EntityRelationship.ecore#//RelationEntity/minMax"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute EntityRelationship.ecore#//RelationEntity/uml"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute EntityRelationship.ecore#//RelationEntity/role"/>
     </genClasses>
     <genClasses ecoreClass="EntityRelationship.ecore#//Attribute">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute EntityRelationship.ecore#//Attribute/name"/>

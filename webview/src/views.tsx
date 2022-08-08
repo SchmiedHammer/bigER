@@ -155,44 +155,41 @@ export class NotationEdgeView extends PolylineEdgeView {
             if (showLabel) {
                 return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
                         {this.renderLine(edge, route, context, args)}
-                        {this.renderAdditionalsNew(edge, route, true, showRelationship, context)}
-                        {this.renderAdditionalsNew(edge, route, false, showRelationship, context)}
+                        {this.renderEndOfEdge(edge, route, true, showRelationship, context)}
+                        {this.renderEndOfEdge(edge, route, false, showRelationship, context)}
                         {context.renderChildren(edge, { route })}
                     </g>;
             }
             return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
                 {this.renderLine(edge, route, context, args)}
-                {this.renderAdditionalsNew(edge, route, true, showRelationship, context)}
-                {this.renderAdditionalsNew(edge, route, false, showRelationship, context)}
+                {this.renderEndOfEdge(edge, route, true, showRelationship, context)}
+                {this.renderEndOfEdge(edge, route, false, showRelationship, context)}
             </g>;
         }
-        if (!showRelationship) {
-            isSource = false;
-        }
-        if (showLabel) {
+        if(showLabel){
             return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
                 {this.renderLine(edge, route, context, args)}
-                {this.renderAdditionalsNew(edge, route, isSource, showRelationship, context)}
+                {this.renderEndOfEdge(edge, route, isSource, showRelationship, context)}
                 {context.renderChildren(edge, { route })}
             </g>;
         } else {
             return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
-            {this.renderLine(edge, route, context, args)}
-            {this.renderAdditionalsNew(edge, route, isSource, showRelationship, context)}
-        </g>;
+                {this.renderLine(edge, route, context, args)}
+                {this.renderEndOfEdge(edge, route, isSource, showRelationship, context)}
+            </g>;
         }
     }
 
-    protected renderAdditionalsNew(edge: SEdge, segments: Point[], isLeft:boolean, showRelationship:boolean, context: RenderingContext): VNode[] {
+    protected renderEndOfEdge(edge: SEdge, segments: Point[], isSource:boolean, showRelationship:boolean, context: RenderingContext): VNode[] {
 
         let notation = 'default';
-        let isSource = false;
         let cardinality = '';
+        let umlRole = '';
 
         if (edge instanceof NotationEdge) {
             notation = edge.notation;
-            isSource = edge.isSource;
             cardinality = edge.relationshipCardinality;
+            umlRole = edge.umlRole;
         }
         if (notation !== this.crowsfoot && notation !== this.uml) {
             // Only child should be a SLabel
@@ -213,31 +210,33 @@ export class NotationEdgeView extends PolylineEdgeView {
             }
             case this.crowsfoot: {
                 if (!cardinality.includes(':')) {
+                     // should never be the case
                     return [];
                 }
                 const sourceCardinality = cardinality.split(':')[0];
                 const targetCardinality = cardinality.split(':')[1];
-                if (isLeft) {
+                if (isSource) {
                     return this.createCrowsFootEdge(source, secondElem, sourceCardinality);
                 }
                 return this.createCrowsFootEdge(target, penultimateElem, targetCardinality);
             }
             case this.uml: {
-                if (!cardinality.includes(':')) {
+                if (!cardinality.includes(':') ) {
+                    // should never be the case
                     return [];
                 }
                 const sourceCardinality = cardinality.split(':')[0];
                 const targetCardinality = cardinality.split(':')[1];
-                if (!showRelationship) {
-                    if (isLeft) {
-                        return this.checkForTypeAndCreateUmlEdge(sourceCardinality, source, secondElem, isLeft);
-                    }
-                } else {
-                    if (isSource) {
-                        return this.checkForTypeAndCreateUmlEdge(sourceCardinality, source, secondElem, isLeft);
-                    }
+                let sourceRole=''
+                let targetRole=''
+                if(umlRole.includes(':')){
+                    sourceRole = umlRole.split(':')[0];
+                    targetRole = umlRole.split(':')[1];
                 }
-                return this.checkForTypeAndCreateUmlEdge(targetCardinality, target, penultimateElem, isLeft);
+                if(isSource){
+                    return this.checkAggregationTypeAndCreateUmlEdge(sourceCardinality, source, secondElem, isSource, sourceRole);
+                }
+                return this.checkAggregationTypeAndCreateUmlEdge(targetCardinality, target, penultimateElem, isSource, targetRole);
             }
             default: {
                 return [];
@@ -245,16 +244,16 @@ export class NotationEdgeView extends PolylineEdgeView {
         }
     }
 
-    private checkForTypeAndCreateUmlEdge(cardinality:string, source:Point, target:Point, isLeft:boolean): VNode[] {
+    private checkAggregationTypeAndCreateUmlEdge(cardinality:string, source:Point, target:Point, isLeft:boolean, role:string): VNode[] {
         if (cardinality.includes(' ')) {
             const type = cardinality.split(' ')[0];
             const number = cardinality.split(' ')[1];
-            return this.createUmlEdge(source, target, type, number, isLeft);
+            return this.createUmlEdge(source, target, type, number, isLeft, role);
         }
-        return this.createUmlEdge(source, target, 'no type', cardinality, isLeft);
+        return this.createUmlEdge(source, target, 'no type', cardinality, isLeft, role);
     }
 
-    private createUmlEdge(point:Point, next:Point, type:string, cardinality:string, isLeft:boolean):VNode[] {
+    private createUmlEdge(point:Point, next:Point, type:string, cardinality:string, isLeft:boolean, role:string):VNode[] {
         let xText = point.x;
         let yText = point.y;
         let xRectCorrected = point.x;
@@ -272,9 +271,9 @@ export class NotationEdgeView extends PolylineEdgeView {
             xRectCorrected -= 1;
         }
         if (point.y <= next.y) {
-            yText += 15;
+            yText += 25;
         } else {
-            yText -= 20;
+            yText -= 30;
         }
         if (type === 'comp') {
             return [<svg>
@@ -290,9 +289,17 @@ export class NotationEdgeView extends PolylineEdgeView {
                             transform={`rotate(${this.angle(point, next) + 45}  ${xRectCorrected} ${point.y})`}/>
                     </svg>];
         }
-        return [<text class-top={true} class-sprotty-label={true} x={xText} y={yText}>{cardinality}</text>];
+        if(role.length > 0){
+            return [
+                <svg>
+                     <text class-top={true} class-sprotty-label={true} x={xText} y={yText+10}>{role}</text>
+                    <text class-top={true} class-sprotty-label={true} x={xText} y={yText}>{cardinality}</text>
+                </svg>
+            ];
+        }else{
+            return [<text class-top={true} class-sprotty-label={true} x={xText} y={yText}>{cardinality}</text>];
+        }
     }
-
 
     private createCrowsFootEdge(point:Point, next:Point, cardinality:string):VNode[] {
         switch (cardinality) {
@@ -346,14 +353,12 @@ export class NotationEdgeView extends PolylineEdgeView {
                 return this.createEdgeWithCircle(color, source);
             }
             return this.createEdgeWithCircle(color, target);
-
         } else if (cardinality === '0+' || cardinality === '1+') {
             const color = cardinality === '0+' ? "var(--vscode-editor-background)" : "var(--vscode-editorActiveLineNumber-foreground)";
             if (isSource) {
                 return this.createEdgeWithCircleAndArrow(color, source, secondElem, arrowSourceX);
             }
             return this.createEdgeWithCircleAndArrow(color, target, penultimateElem, arrowTargetX);
-
         } else {
             return [];
         }

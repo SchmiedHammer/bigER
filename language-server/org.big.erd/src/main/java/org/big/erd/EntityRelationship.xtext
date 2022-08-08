@@ -28,7 +28,7 @@ Relationship:
 RelationEntity:
 	target=[Entity] ('[' 
 		(cardinality=CardinalityType | customMultiplicity=STRING | minMax=MinMax | uml=Uml)
-	']')?;
+	']')?(role=STRING)?;
 
 Attribute:
 	name=ID (':' datatype=DataType)? (type=AttributeType)?;
@@ -41,10 +41,10 @@ terminal INT returns ecore::EInt:
     ('0'..'9')+;
     
 terminal MinMax:
-	 ('0'..'9')+','('0'..'9')?('*')?;
+	 ('0'..'9')+','(('0'..'9')+|'*');
 	 
 terminal Uml:
-	 ('comp ')?('agg ')?('0'..'9')+('..'('0'..'9')+)?('..''*')?;
+	 (('comp ')?|('agg ')?)('0'..'9')+(('..'('0'..'9')+)?|('..''*')?);
 
 enum AttributeType:
 	NONE = 'none' | 

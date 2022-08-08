@@ -1,8 +1,9 @@
 {   
     "version": "0.2.0",
     "configurations": [
+        
         {
-            "name": "Launch bigER Extension",
+            "name": "Run bigER Extension",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
@@ -15,23 +16,6 @@
                 "${workspaceFolder}/extension/pack/*.js"
             ],
             "sourceMaps": true
-        },
-		{
-			"name": "Run bigER Extension Tests",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-                "--disable-extensions",
-                "${workspaceFolder}/examples",
-				"--extensionDevelopmentPath=${workspaceFolder}/extension",
-				"--extensionTestsPath=${workspaceFolder}/extension/dist/test/suite/index"
-			],
-            "sourceMaps": true,
-			"outFiles": [
-                "${workspaceFolder}/extension/pack/*.js",
-                "${workspaceFolder}/extension/dist/test/**/*.js"
-            ]
-		}
+        }
     ]
 }
