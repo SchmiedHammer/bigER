@@ -203,6 +203,6 @@
         "clean": "rimraf extension/dist extension/pack",
         "build": "webpack --mode=development",
         "watch": "webpack --mode=development --watch",
-        "lint": "eslint './src/**'"
+        "lint": "eslint \"./src/**\""
     }
 }
