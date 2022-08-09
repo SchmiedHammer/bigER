@@ -166,7 +166,7 @@ export class NotationEdgeView extends PolylineEdgeView {
                 {this.renderEndOfEdge(edge, route, false, showRelationship, context)}
             </g>;
         }
-        if(showLabel){
+        if (showLabel) {
             return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
                 {this.renderLine(edge, route, context, args)}
                 {this.renderEndOfEdge(edge, route, isSource, showRelationship, context)}
@@ -221,19 +221,19 @@ export class NotationEdgeView extends PolylineEdgeView {
                 return this.createCrowsFootEdge(target, penultimateElem, targetCardinality);
             }
             case this.uml: {
-                if (!cardinality.includes(':') ) {
+                if (!cardinality.includes(':')) {
                     // should never be the case
                     return [];
                 }
                 const sourceCardinality = cardinality.split(':')[0];
                 const targetCardinality = cardinality.split(':')[1];
-                let sourceRole=''
-                let targetRole=''
-                if(umlRole.includes(':')){
+                let sourceRole = '';
+                let targetRole = '';
+                if (umlRole.includes(':')) {
                     sourceRole = umlRole.split(':')[0];
                     targetRole = umlRole.split(':')[1];
                 }
-                if(isSource){
+                if (isSource) {
                     return this.checkAggregationTypeAndCreateUmlEdge(sourceCardinality, source, secondElem, isSource, sourceRole);
                 }
                 return this.checkAggregationTypeAndCreateUmlEdge(targetCardinality, target, penultimateElem, isSource, targetRole);
@@ -254,35 +254,35 @@ export class NotationEdgeView extends PolylineEdgeView {
     }
 
     private createUmlEdge(point:Point, next:Point, type:string, cardinality:string, isLeft:boolean, role:string):VNode[] {
-        let xText = point.x
-        let yText = point.y + 20
-        let xRectCorrected = point.x
-        let xRole = xText
+        let xText = point.x;
+        let yText = point.y + 20;
+        let xRectCorrected = point.x;
+        let xRole = xText;
 
         if (isLeft) {
-            xText += 10
-            xRole += 10
-            xRectCorrected += 1
+            xText += 10;
+            xRole += 10;
+            xRectCorrected += 1;
         } else {
-            xText -= (20 + cardinality.length)
-            xRole -= (20 + role.length)
-            if(role.length > 3){
-                xRole -= (role.length * 4)
-            }else{
-                xRole -= role.length
+            xText -= (20 + cardinality.length);
+            xRole -= (20 + role.length);
+            if (role.length > 3) {
+                xRole -= (role.length * 4);
+            } else {
+                xRole -= role.length;
             }
             if (cardinality.length > 3) {
-                xText -= (cardinality.length * 3)
+                xText -= (cardinality.length * 3);
             } else {
-                xText -= cardinality.length
+                xText -= cardinality.length;
             }
-            xRectCorrected -= 1
+            xRectCorrected -= 1;
         }
-        if(role.length > 0){
+        if (role.length > 0) {
             if (type === 'comp') {
                 yText += 3;
                 return [<svg>
-                            <text class-top={true} class-sprotty-label={true} x={xRole} y={yText+15}>{role}</text>
+                            <text class-top={true} class-sprotty-label={true} x={xRole} y={yText + 15}>{role}</text>
                             <text class-top={true} class-sprotty-label={true} x={xText} y={yText}>{cardinality}</text>
                             <rect x={xRectCorrected} y={point.y - 12} width={12} height={12} fill="var(--vscode-editor-background)"
                                   transform={`rotate(${this.angle(point, next) + 45}  ${xRectCorrected} ${point.y})`}/>
@@ -291,7 +291,7 @@ export class NotationEdgeView extends PolylineEdgeView {
             if (type === 'agg') {
                 yText += 3;
                 return [<svg>
-                            <text class-top={true} class-sprotty-label={true} x={xRole} y={yText+15}>{role}</text>
+                            <text class-top={true} class-sprotty-label={true} x={xRole} y={yText + 15}>{role}</text>
                             <text class-top={true} class-sprotty-label={true} x={xText} y={yText}>{cardinality}</text>
                             <rect x={xRectCorrected} y={point.y - 12} width={12} height={12} fill="var(--vscode-editorActiveLineNumber-foreground)"
                                 transform={`rotate(${this.angle(point, next) + 45}  ${xRectCorrected} ${point.y})`}/>
@@ -300,11 +300,11 @@ export class NotationEdgeView extends PolylineEdgeView {
             yText += 3;
             return [
                 <svg>
-                    <text class-top={true} class-sprotty-label={true} x={xRole} y={yText+15}>{role}</text>
+                    <text class-top={true} class-sprotty-label={true} x={xRole} y={yText + 15}>{role}</text>
                     <text class-top={true} class-sprotty-label={true} x={xText} y={yText}>{cardinality}</text>
                 </svg>
             ];
-        }else{
+        } else {
             if (type === 'comp') {
                 return [<svg>
                             <text class-top={true} class-sprotty-label={true} x={xText} y={yText}>{cardinality}</text>
