@@ -15,6 +15,7 @@ import org.eclipse.emf.ecore.EStructuralFeature
 import org.big.erd.entityRelationship.Attribute
 import org.big.erd.entityRelationship.Entity
 import org.big.erd.entityRelationship.NotationType
+import org.big.erd.entityRelationship.GenerateOptionType
 import org.apache.log4j.Logger
 
 /**
@@ -25,15 +26,25 @@ import org.apache.log4j.Logger
 class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 
 	public static String MISSING_MODEL_HEADER = "missingModelHeader";
+	public static String UNSUPPORTED_GENERATOR_FOR_NOTATION = "missingModelHeader";
 	public static String MISSING_ATTRIBUTE_DATATYPE = "missingAttributeDatatype";
 	public static String LOWERCASE_ENTITY_NAME = "lowercaseEntityName";
 	static val LOG = Logger.getLogger(EntityRelationshipValidator)
-	
+
 	@Check
 	def checkModel(Model model) {
+		// required model name
 		if (model.name === null || model.name.isBlank) {
 			error('''Missing model header 'erdiagram <name>' ''' , model, EntityRelationshipPackage.Literals.MODEL__NAME,  MISSING_MODEL_HEADER)
 		}
+
+		// sql generate option enabled only for default notation
+		if (model.generateOption !== null && model.generateOption.generateOptionType === GenerateOptionType.SQL) {
+			if (model.notation !== null && model.notation.notationType !== NotationType.DEFAULT) {
+				error('''SQL code generation is not supported for this notation''', model,  EntityRelationshipPackage.Literals.MODEL__GENERATE_OPTION, UNSUPPORTED_GENERATOR_FOR_NOTATION)
+			}
+		}
+
 	}
 	
 	@Check
@@ -96,8 +107,17 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 		val entities = model.entities?.filter[e | !e.weak]
         entities.forEach [ e |
 			val attributes = e.attributes?.filter[a | a.type === AttributeType.KEY]
-			if (attributes.isNullOrEmpty) 
-				info('''Missing primary key for entity''', e, EntityRelationshipPackage.Literals.ENTITY__NAME)
+			if (attributes.isNullOrEmpty)  {
+				if (model.generateOption !== null && model.generateOption.generateOptionType === GenerateOptionType.SQL) {
+					error('''Missing primary key for entity''', e, EntityRelationshipPackage.Literals.ENTITY__NAME);
+				} else {
+					info('''Missing primary key for entity''', e, EntityRelationshipPackage.Literals.ENTITY__NAME);
+				}
+
+			}
+
+
+
 		]
     }
 
@@ -107,8 +127,14 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 		val entities = model.entities?.filter[e | e.weak]
         entities.forEach [ e |
 			val attributes = e.attributes?.filter[a | a.type == AttributeType.PARTIAL_KEY]
-			if (attributes.isNullOrEmpty) 
-				info('''Missing partial-key for weak entity''', e, EntityRelationshipPackage.Literals.ENTITY__NAME)
+			if (attributes.isNullOrEmpty) {
+				if (model.generateOption !== null && model.generateOption.generateOptionType === GenerateOptionType.SQL) {
+					error('''Missing partial-key for entity''', e, EntityRelationshipPackage.Literals.ENTITY__NAME);
+				} else {
+					info('''Missing partial-key for entity''', e, EntityRelationshipPackage.Literals.ENTITY__NAME);
+				}
+
+			}
 		]
     }
     
@@ -121,7 +147,7 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 			val thirdElement = r.third
 			
 			checkForUnallowedRoles(model.notation.notationType, r)
-			
+
 			if(model.notation.notationType.equals(NotationType.BACHMAN)){
 				checkBachmanCardinality(firstElement, r, EntityRelationshipPackage.Literals.RELATIONSHIP__FIRST)
 				checkBachmanCardinality(secondElement, r, EntityRelationshipPackage.Literals.RELATIONSHIP__SECOND)
@@ -168,9 +194,9 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 		}
 		if(relationship.third != null && relationship.third.role !== null){
 			info('''Role only allowed for UML.''', relationship, EntityRelationshipPackage.Literals.RELATIONSHIP__THIRD)
-		}	
+		}
 	}
-	
+
 	 def checkBachmanCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature) {
 		if (relationEntity !== null && (relationEntity.cardinality === null ||
 										relationEntity.customMultiplicity !== null ||
@@ -185,7 +211,7 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
     def checkChenCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature){
     	if(relationEntity !== null && (relationEntity.cardinality === null ||
     								   relationEntity.customMultiplicity !== null ||
-			 						   relationEntity.minMax !== null || 
+			 						   relationEntity.minMax !== null ||
 			 						   relationEntity.uml !== null ||
     								   relationEntity.cardinality === CardinalityType.ZERO ||
     								   relationEntity.cardinality === CardinalityType.ONE_OR_MORE || 

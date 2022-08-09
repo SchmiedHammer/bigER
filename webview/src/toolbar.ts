@@ -47,7 +47,7 @@ export class ERDiagramWidget extends VscodeDiagramWidget {
                         <span class="tooltiptext">Code Generator</span>
                     </vscode-button>
                     <vscode-button appearance="icon" class="tooltip" id="notation-button">
-                        <span class="codicon codicon-symbol-color"></span>
+                        <span class="codicon codicon-settings"></span>
                         <span class="tooltiptext">Notation</span>
                     </vscode-button>
                     <div class="vertical-seperator"></div>
@@ -68,7 +68,7 @@ export class ERDiagramWidget extends VscodeDiagramWidget {
                         <span class="tooltiptext">Expand All</span>
                     </vscode-button>
                     <div class="vertical-seperator"></div>
-                    <vscode-link href="https://github.com/borkdominik/bigER/wiki/Language-Documentation">
+                    <vscode-link href="https://github.com/borkdominik/bigER/wiki/Language">
                         <vscode-button appearance="icon" class="tooltip-help" id="more-button" style="margin-right: 5px;">
                             <span class="codicon codicon-question"></span>
                             <span class="tooltiptext">Help</span>

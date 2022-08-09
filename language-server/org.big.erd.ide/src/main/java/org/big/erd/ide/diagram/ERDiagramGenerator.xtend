@@ -59,7 +59,7 @@ class ERDiagramGenerator implements IDiagramGenerator {
 		this.state = context.state
 		val contentHead = context.resource.contents.head
 		if (contentHead instanceof Model) {
-			LOG.info("Generating diagram for model with URI '" + context.resource.URI.lastSegment + "'")
+			LOG.debug("Generating diagram for model with URI '" + context.resource.URI.lastSegment + "'")
 			model = contentHead
 			toSGraph(model, context)
 		}
@@ -103,6 +103,8 @@ class ERDiagramGenerator implements IDiagramGenerator {
 				addRelationEdges(r, context)
 			}
 		]
+
+		LOG.debug("Generated Graph: " + graph)
 	}
 
 	def RelationshipNode relationshipNodes(Relationship relationship, extension Context context) {
@@ -129,14 +131,14 @@ class ERDiagramGenerator implements IDiagramGenerator {
 	}
 
 	def void addRelationEdges(Relationship relationship, extension Context context) {
-		
+
 		val notation = model.notation?.notationType !== null ? model.notation.notationType : NotationType.DEFAULT;
-		
+
 		if (relationship.first !== null) {
 			var cardinality = getCardinality(relationship.first)
 			var role = ""
 			if (notation.equals(NotationType.CROWSFOOT)) {
-				cardinality = combineCardinality(relationship.first, relationship.second)	
+				cardinality = combineCardinality(relationship.first, relationship.second)
 			}
 			else if(notation.equals(NotationType.UML)){
 				cardinality = combineCardinality(relationship.first, relationship.second)
@@ -181,7 +183,7 @@ class ERDiagramGenerator implements IDiagramGenerator {
 		}
 		return "";
 	}
-	
+
 	def String combineRoles(RelationEntity source, RelationEntity target){
 		val roleSourceEntity = source.role === null ? "" : source.role
 		val roleTargetEntity = target.role === null ? "" : target.role
@@ -195,8 +197,22 @@ class ERDiagramGenerator implements IDiagramGenerator {
 			case NotationType.CROWSFOOT: return getCrowsFootsCardinality(relationEntity.cardinality)
 			case NotationType.MINMAX: return relationEntity.minMax ?: ''
 			case NotationType.UML: return relationEntity.uml ?: relationEntity.cardinality.toString()
-			default: return relationEntity.customMultiplicity ?: relationEntity.cardinality.toString()
+			default: return getDefaultCardinality(relationEntity)
 		}
+	}
+
+	def String getDefaultCardinality(RelationEntity relationEntity) {
+		if (relationEntity.customMultiplicity !== null) {
+			return relationEntity.customMultiplicity
+		} else if (relationEntity.cardinality !== null) {
+			if (relationEntity.cardinality === CardinalityType.NONE) {
+				return " ";
+			}
+			return relationEntity.cardinality.toString();
+		} else {
+			return " ";
+		}
+
 	}
 
 	def String getChenCardinality(CardinalityType cardinality) {

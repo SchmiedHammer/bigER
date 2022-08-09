@@ -22,7 +22,7 @@ import org.eclipse.xtext.util.RuntimeIOException
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#code-generation
  */
 class EntityRelationshipGenerator extends AbstractGenerator {
-
+	
 	override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
 		
 		val diagram = resource.contents.get(0) as Model
@@ -112,8 +112,10 @@ class EntityRelationshipGenerator extends AbstractGenerator {
 
 	private def primaryKey(Entity entity) {
 		val keyAttributes = entity.attributes?.filter[it.type === AttributeType.KEY]
-		if (keyAttributes.nullOrEmpty)
+		if (keyAttributes.nullOrEmpty) {
 			return entity.attributes.get(0)
+		}
+			
 		return keyAttributes.get(0)
 	}
 	

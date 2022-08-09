@@ -27,10 +27,10 @@ export class ERDiagramSprottyStarter extends SprottyLspEditStarter {
         container.rebind(VscodeDiagramServer).to(BigERDiagramServer);
         container.rebind(VscodeDiagramWidget).to(ERDiagramWidget).inSingletonScope();
         container.bind(TYPES.PopupMouseListener).to(PopupButtonListener);
-        configureCommand(container, AddEntityCommand);
-        configureCommand(container, AddRelationshipCommand);
         configureModelElement(container, 'button:delete', PopupButton, PopupButtonView);
         configureModelElement(container, 'button:edit', PopupButton, PopupButtonView);
+        configureCommand(container, AddEntityCommand);
+        configureCommand(container, AddRelationshipCommand);
     }
 }
 
