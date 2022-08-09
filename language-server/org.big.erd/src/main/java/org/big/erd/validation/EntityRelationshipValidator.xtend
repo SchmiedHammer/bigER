@@ -29,7 +29,6 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 	public static String UNSUPPORTED_GENERATOR_FOR_NOTATION = "missingModelHeader";
 	public static String MISSING_ATTRIBUTE_DATATYPE = "missingAttributeDatatype";
 	public static String LOWERCASE_ENTITY_NAME = "lowercaseEntityName";
-	static val LOG = Logger.getLogger(EntityRelationshipValidator)
 
 	@Check
 	def checkModel(Model model) {
@@ -257,43 +256,32 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 	}
 	
 	def checkUmlCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature) {
-		LOG.info("1")
 		if (relationEntity === null) {
-			LOG.info("2")
 			return
 		}
 		if (relationEntity.customMultiplicity !== null || relationEntity.minMax !== null ||
 			(relationEntity.uml === null && relationEntity.cardinality !== CardinalityType.ZERO &&
 				relationEntity.cardinality !== CardinalityType.ONE)) {
-					LOG.info("3")
 			info('''Wrong cardinality.Usage: [num],[min..max] or [min..*]''', relationship, feature)
 		}
 		if (relationEntity.uml.contains("..")) {
-		LOG.info("4")
 			var cardinality = relationEntity.uml
 
 			// remove type (agg|comp)
 			if (relationEntity.uml.contains(" ")) {
-				LOG.info("5")
 				cardinality = relationEntity.uml.split(" ").get(1)
 			}
 			var numbers = cardinality.split("\\.\\.")
 			if (numbers.length === 2) {
-				LOG.info("6")
 				if (numbers.get(0).isEmpty || numbers.get(1).isEmpty) {
-					LOG.info("7")
 					info('''Wrong cardinality.Usage: [num],[min..max] or [min..*]''', relationship, feature)
 				}
 				var n1 = numbers.get(0)
 				var n2 = numbers.get(1)
-				LOG.info("n1: "+n1)
-				LOG.info("n2: "+n2)
 				if (n1.matches("\\d+") && n2.matches("\\d+") && Integer.parseInt(n1) > Integer.parseInt(n2)) {
-					LOG.info("8")
 					info('''Wrong cardinality. Usage: [min..max] min <= max''', relationship, feature)
 				}
 			} else {
-				LOG.info("9")
 				info('''Wrong cardinality.Usage: [num],[min..max] or [min..*]''', relationship, feature)
 			}
 		}
