@@ -147,7 +147,7 @@ export class NotationEdgeView extends PolylineEdgeView {
 
         if (edge instanceof NotationEdge) {
             showLabel = edge.notation !== this.bachman && edge.notation !== this.crowsfoot;
-            showRelationship = edge.showRelationship;
+            showRelationship = edge.showRelationship && edge.notation === this.uml;
             renderBothEnds = edge.notation === this.crowsfoot || (edge.notation === this.uml && !showRelationship);
             isSource = edge.isSource;
         }
@@ -155,32 +155,32 @@ export class NotationEdgeView extends PolylineEdgeView {
             if (showLabel) {
                 return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
                         {this.renderLine(edge, route, context, args)}
-                        {this.renderEndOfEdge(edge, route, true, showRelationship, context)}
-                        {this.renderEndOfEdge(edge, route, false, showRelationship, context)}
+                        {this.renderEndOfEdge(edge, route, true, context)}
+                        {this.renderEndOfEdge(edge, route, false, context)}
                         {context.renderChildren(edge, { route })}
                     </g>;
             }
             return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
                 {this.renderLine(edge, route, context, args)}
-                {this.renderEndOfEdge(edge, route, true, showRelationship, context)}
-                {this.renderEndOfEdge(edge, route, false, showRelationship, context)}
+                {this.renderEndOfEdge(edge, route, true, context)}
+                {this.renderEndOfEdge(edge, route, false, context)}
             </g>;
         }
-        if (showLabel) {
+        if (showLabel && !showRelationship) {
             return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
                 {this.renderLine(edge, route, context, args)}
-                {this.renderEndOfEdge(edge, route, isSource, showRelationship, context)}
+                {this.renderEndOfEdge(edge, route, isSource, context)}
                 {context.renderChildren(edge, { route })}
             </g>;
         } else {
             return <g class-sprotty-edge={true} class-mouseover={edge.hoverFeedback}>
                 {this.renderLine(edge, route, context, args)}
-                {this.renderEndOfEdge(edge, route, isSource, showRelationship, context)}
+                {this.renderEndOfEdge(edge, route, isSource, context)}
             </g>;
         }
     }
 
-    protected renderEndOfEdge(edge: SEdge, segments: Point[], isSource:boolean, showRelationship:boolean, context: RenderingContext): VNode[] {
+    protected renderEndOfEdge(edge: SEdge, segments: Point[], isSource:boolean, context: RenderingContext): VNode[] {
 
         let notation = 'default';
         let cardinality = '';

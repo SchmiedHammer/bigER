@@ -196,7 +196,7 @@ class EntityRelationshipValidator extends AbstractEntityRelationshipValidator {
 		}
 	}
 
-	 def checkBachmanCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature) {
+	def checkBachmanCardinality(RelationEntity relationEntity, Relationship relationship, EStructuralFeature feature) {
 		if (relationEntity !== null && (relationEntity.cardinality === null ||
 										relationEntity.customMultiplicity !== null ||
 			 							relationEntity.minMax !== null || relationEntity.uml !== null ||
