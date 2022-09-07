@@ -27,7 +27,7 @@ Relationship:
 
 RelationEntity:
 	target=[Entity] ('[' 
-		(cardinality=CardinalityType | customMultiplicity=STRING | minMax=MinMax | uml=Uml)
+		(cardinality=CardinalityType | customMultiplicity=STRING | minMax=MIN_MAX | uml=Uml)?
 	']')?(role=STRING)?;
 
 Attribute:
@@ -40,7 +40,7 @@ DataType:
 terminal INT returns ecore::EInt:
     ('0'..'9')+;
     
-terminal MinMax:
+terminal MIN_MAX:
 	 ('0'..'9')+','(('0'..'9')+|'*');
 	 
 terminal Uml:
@@ -62,4 +62,4 @@ enum GenerateOptionType:
 	SQL = 'sql';
 
 enum NotationType:
-    DEFAULT='default' | CHEN='chen' | MINMAX='minmax' | BACHMAN='bachman' | CROWSFOOT='crowsfoot'| UML='uml';   
+    DEFAULT='default' | CHEN='chen' | BACHMAN='bachman' | CROWSFOOT='crowsfoot'| UML='uml';

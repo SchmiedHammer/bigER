@@ -195,8 +195,8 @@ class ERDiagramGenerator implements IDiagramGenerator {
 			case NotationType.BACHMAN: return relationEntity.cardinality.toString
 			case NotationType.CHEN: return getChenCardinality(relationEntity.cardinality)
 			case NotationType.CROWSFOOT: return getCrowsFootsCardinality(relationEntity.cardinality)
-			case NotationType.MINMAX: return relationEntity.minMax ?: ''
 			case NotationType.UML: return relationEntity.uml ?: relationEntity.cardinality.toString()
+			case NotationType.DEFAULT: return getDefaultCardinality(relationEntity)
 			default: return getDefaultCardinality(relationEntity)
 		}
 	}
@@ -204,15 +204,15 @@ class ERDiagramGenerator implements IDiagramGenerator {
 	def String getDefaultCardinality(RelationEntity relationEntity) {
 		if (relationEntity.customMultiplicity !== null) {
 			return relationEntity.customMultiplicity
+		} else if (relationEntity.minMax !== null) {
+			return relationEntity.minMax
 		} else if (relationEntity.cardinality !== null) {
 			if (relationEntity.cardinality === CardinalityType.NONE) {
 				return " ";
 			}
 			return relationEntity.cardinality.toString();
-		} else {
-			return " ";
 		}
-
+		return " ";
 	}
 
 	def String getChenCardinality(CardinalityType cardinality) {
@@ -248,12 +248,6 @@ class ERDiagramGenerator implements IDiagramGenerator {
 			labelText = relationship.name
 			combinedLabels = cardinality
 
-		} else if (notation.equals(NotationType.MINMAX)) {
-			if (!cardinality.isEmpty && !cardinality.contains('(') && !cardinality.contains(')')) {
-				labelText = '(' + cardinality + ')'
-			} else {
-				labelText = cardinality
-			}
 		} else {
 			labelText = cardinality
 		}

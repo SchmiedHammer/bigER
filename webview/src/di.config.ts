@@ -6,12 +6,13 @@ import '../css/diagram.css';
 import '../css/popup.css';
 import {
     configureModelElement, HtmlRoot, HtmlRootView, overrideViewerOptions, PreRenderedElement, PreRenderedView,
-    SRoutingHandle, SRoutingHandleView, TYPES, loadDefaultModules, ConsoleLogger, LogLevel, SCompartmentView,
-    SCompartment, editLabelFeature, labelEditUiModule, SModelRoot, SLabel, ExpandButtonHandler,
-    SButton, expandFeature, SLabelView, CreateElementCommand, configureCommand, ExpandButtonView, editFeature
+    TYPES, loadDefaultModules, ConsoleLogger, LogLevel, SCompartmentView, SCompartment, editLabelFeature,
+    labelEditUiModule, SModelRoot, SLabel, ExpandButtonHandler, SButton, expandFeature, SLabelView, ExpandButtonView,
+    editFeature
 } from 'sprotty';
 import { InheritanceEdgeView, ERModelView, EntityNodeView, RelationshipNodeView, NotationEdgeView } from './views';
 import { EntityNode, ERModel, MultiplicityLabel, NotationEdge, RelationshipNode, InheritanceEdge } from './model';
+import { BigerEdgeLayoutPostprocessor } from './layout-postprocessor';
 
 /**
  * Sprotty Dependency Injection container
@@ -26,9 +27,13 @@ const DiagramModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(TYPES.IAnchorComputer).to(LibavoidEllipseAnchor).inSingletonScope();
     bind(TYPES.IAnchorComputer).to(LibavoidRectangleAnchor).inSingletonScope();
 
-    // change animation speed to 400ms
+    // custom edge layout postprocessor
+    bind(BigerEdgeLayoutPostprocessor).toSelf().inSingletonScope();
+    bind(TYPES.IVNodePostprocessor).toService(BigerEdgeLayoutPostprocessor);
+
+    // change animation speed to 300ms
     rebind(TYPES.CommandStackOptions).toConstantValue({
-        defaultDuration: 400,
+        defaultDuration: 300,
         undoHistoryLimit: 50
     });
     // Model element bindings
@@ -56,17 +61,13 @@ const DiagramModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     configureModelElement(context, 'html', HtmlRoot, HtmlRootView);
     configureModelElement(context, 'palette', SModelRoot, HtmlRootView);
     configureModelElement(context, 'pre-rendered', PreRenderedElement, PreRenderedView);
-    configureModelElement(context, 'routing-point', SRoutingHandle, SRoutingHandleView);
-    configureModelElement(context, 'volatile-routing-point', SRoutingHandle, SRoutingHandleView);
     configureModelElement(context, ExpandButtonHandler.TYPE, SButton, ExpandButtonView);
-    configureCommand(context, CreateElementCommand);
 });
 
 /**
  * Creates the container, loads the default Sprotty modules and adds ViewerOptions
  */
 export function createDiagramContainer(widgetId: string): Container {
-
     const container = new Container();
     // use labelEditUi from VS Code
     loadDefaultModules(container, { exclude: [labelEditUiModule] });
@@ -84,8 +85,12 @@ export function createDiagramContainer(widgetId: string): Container {
     router.setOptions({
         routingType: RouteType.Orthogonal,
         segmentPenalty: 50,
-        idealNudgingDistance: 10,
-        shapeBufferDistance: 6,
+        // at least height of label to avoid labels overlap if
+        // there two neighbour edges have labels on the position
+        idealNudgingDistance: 24,
+        // 25 - height of label text + label offset. Such shape buffer distance is required to
+        // avoid label over shape
+        shapeBufferDistance: 25,
         nudgeOrthogonalSegmentsConnectedToShapes: true,
         // allow or disallow moving edge end from center
         nudgeOrthogonalTouchingColinearSegments: false,
